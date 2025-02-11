@@ -1,0 +1,7 @@
+.env
+.idea
+.rollup.cache
+dist
+node_modules
+strapi.ts
+tsconfig.tsbuildinfo
