@@ -1,6 +1,6 @@
 {
   "name": "@malevich-studio/strapi-sdk-typescript",
-  "version": "1.0.8",
+  "version": "1.0.10",
   "sideEffects": false,
   "bin": {
     "generate-strapi-types": "./dist/cli.mjs"
@@ -31,9 +31,23 @@
     "mime": "^4.0.6"
   },
   "type": "module",
-  "author": "",
+  "author": {
+    "name": "Malevich Studio",
+    "email": "info@malevichstudio.com",
+    "url": "https://malevichstudio.com/"
+  },
+  "contributors": [
+    {
+      "name": "Gregory Peretyaka",
+      "email": "peretyaka@gmail.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/malevich-studio/strapi-sdk-typescript"
+  },
   "license": "ISC",
-  "description": "",
+  "description": "A TypeScript SDK for interacting with Strapi APIs.",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-json": "^6.1.0",
@@ -42,5 +56,6 @@
     "rollup": "^4.34.6",
     "rollup-plugin-dts": "^6.1.1",
     "typescript": "^5.7.3"
-  }
+  },
+  "keywords": ["strapi", "strapi5", "api", "rest", "sdk", "typescript", "nextjs"]
 }
