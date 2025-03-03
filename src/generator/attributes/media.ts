@@ -20,7 +20,7 @@ export default class Media extends BaseRelation {
   }
 
   public getInputType(): string {
-    return 'RelationInput';
+    return 'number[]';
   }
 
   public getPopulates() {
