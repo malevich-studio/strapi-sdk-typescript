@@ -23,7 +23,8 @@ export default class Component extends BaseRelation {
   }
 
   public getInputType(): string {
-    return `${getComponentName(this.attribute.component)}Input`;
+    const typeName = `${getComponentName(this.attribute.component)}Input`;
+    return this.attribute.repeatable ? `${typeName}[]` : typeName;
   }
 
   public getPopulates() {

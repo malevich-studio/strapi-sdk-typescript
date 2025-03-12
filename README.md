@@ -114,6 +114,7 @@ const articles = api.articles(
     - [ ] Log In functionality
     - [ ] User Registration
     - [ ] User privileges check
+- [ ] Add localization features
 - [ ] Refactor `src/generator/index.ts` for better maintainability
 - [ ] Enable passing Strapi credentials via CLI parameters
 - [ ] Allow customization of API class path
@@ -125,3 +126,6 @@ const articles = api.articles(
 ---
 
 📌 **Contributions are welcome!** If you encounter issues or have feature requests, feel free to open a pull request or an issue. 🚀
+
+📦 [View on NPM](https://www.npmjs.com/package/@malevich-studio/strapi-sdk-typescript)
+🔗 [GitHub Repository](https://github.com/malevich-studio/strapi-sdk-typescript)

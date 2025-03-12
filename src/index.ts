@@ -100,6 +100,10 @@ export type FilterValue<T> = {
   $containsi?: string,
   // Does not contain (case-insensitive)
   $notContainsi?: string,
+  // Is null
+  $null?: boolean,
+  // Is not null
+  $notNull?: boolean,
   // Is between
   $between?: [T, T],
   // Starts with
