@@ -11,6 +11,7 @@ import Base from "@/generator/attributes/base";
 import type {BaseAttribute} from "@/generator/attributes/base";
 import Boolean from "@/generator/attributes/boolean.ts";
 import Date from "@/generator/attributes/date.ts";
+import Dynamiczone from "@/generator/attributes/dynamiczone.ts";
 
 const types: Record<string, typeof Base> = {
   'string': String,
@@ -28,12 +29,14 @@ const types: Record<string, typeof Base> = {
   'date': Date,
   'datetime': DateTime,
   'component': Component,
+  'dynamiczone': Dynamiczone,
   'blocks': Blocks,
   'json': Json,
 };
 
 export default function getAttributeGenerator(name: string, attribute: BaseAttribute & {type: string}): Base {
   if (!types[attribute.type]) {
+    console.log(attribute)
     throw new Error(`Attribute type "${attribute.type}" is not defined`);
   }
 

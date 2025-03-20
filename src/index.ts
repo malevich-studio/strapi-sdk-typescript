@@ -134,16 +134,26 @@ export type Query<Fields, Sort, Filters, Populate> = {
   }),
 }
 
+export type DynamiczoneInput<ComponentName, ComponentInputType> = ComponentInputType & {
+  __component: ComponentName,
+};
+
+export type DynamiczonePopulate<T> = {
+  on: {
+    [K in keyof T]: T[K];
+  };
+};
+
 export class Strapi {
   constructor(
     private readonly url: string,
     private readonly token: string,
   ) {}
 
-  public async request<T>(endpoint: string, data: object | FormData = {}, params: RequestInit = {}): Promise<Response<T>> {
+  public async fetch<T>(endpoint: string, data: object | FormData = {}, params: RequestInit = {}): Promise<Response<T>> {
     const queryString = params.method === 'GET' ? qs.stringify(data) : '';
 
-    return await this.baseRequest<Response<T>>(queryString ? `${endpoint}?${queryString}` : endpoint, _.merge({
+    return await this.baseFetch<Response<T>>(queryString ? `${endpoint}?${queryString}` : endpoint, _.merge({
       headers: {
         'Content-Type': 'application/json',
       },
@@ -157,35 +167,35 @@ export class Strapi {
   }
 
   async getDocuments<T, Q extends object>(endpoint: string, data?: Q, params: RequestInit = {}): Promise<Response<T[]>> {
-    return await this.request<T[]>(endpoint, data, {
+    return await this.fetch<T[]>(endpoint, data, {
       method: 'GET',
       ...params,
     });
   }
 
   async getDocument<T, Q extends object>(endpoint: string, data?: Q, params: RequestInit = {}): Promise<Response<T>> {
-    return await this.request<T>(endpoint, data, {
+    return await this.fetch<T>(endpoint, data, {
       method: 'GET',
       ...params,
     });
   }
 
   async create<T, Q extends object>(endpoint: string, data: Q, params: RequestInit = {}): Promise<Response<T>> {
-    return await this.request<T>(endpoint, data, {
+    return await this.fetch<T>(endpoint, data, {
       method: 'POST',
       ...params,
     });
   }
 
   async update<T, Q extends object>(endpoint: string, id: string, data: Q, params: RequestInit = {}): Promise<Response<T>> {
-    return await this.request<T>(`${endpoint}/${id}`, data, {
+    return await this.fetch<T>(`${endpoint}/${id}`, data, {
       method: 'PUT',
       ...params,
     });
   }
 
   async delete<T>(endpoint: string, id: string, params: RequestInit = {}): Promise<Response<T>> {
-    return await this.request<T>(`${endpoint}/${id}`, {}, {
+    return await this.fetch<T>(`${endpoint}/${id}`, {}, {
       method: 'DELETE',
       ...params,
     });
@@ -207,13 +217,13 @@ export class Strapi {
   }
 
   async uploadForm(form: FormData) {
-    return (await this.baseRequest<File[]>('upload', {
+    return (await this.baseFetch<File[]>('upload', {
       method: 'POST',
       body: form,
     }));
   }
 
-  private async baseRequest<T>(endpoint: string, params: RequestInit = {}): Promise<T> {
+  private async baseFetch<T>(endpoint: string, params: RequestInit = {}): Promise<T> {
     const response = await fetch(`${this.url}/api/${endpoint}`, _.merge({
       headers: {
         Authorization: `Bearer ${this.token}`,

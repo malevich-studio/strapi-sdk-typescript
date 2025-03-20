@@ -184,8 +184,8 @@ function generateMethodsCode(contentType: ContentType) {
  * Main function to fetch Strapi (v5) data and generate the d.ts file
  */
 export async function generateStrapiTypes(strapi: Strapi) {
-  const contentTypes = (await strapi.request<ContentType[]>('content-type-builder/content-types')).data;
-  const components = (await strapi.request<Component[]>('content-type-builder/components')).data;
+  const contentTypes = (await strapi.fetch<ContentType[]>('content-type-builder/content-types')).data;
+  const components = (await strapi.fetch<Component[]>('content-type-builder/components')).data;
 
   const allInterfaces: string[] = [];
   const methods: string[] = [];
@@ -231,7 +231,7 @@ export async function generateStrapiTypes(strapi: Strapi) {
   }
 
   const output = [
-    'import {Strapi as StrapiBase, Query, Filters, FilterValue, RelationInput} from "@malevich-studio/strapi-sdk-typescript";',
+    'import {Strapi as StrapiBase, Query, Filters, FilterValue, RelationInput, DynamiczonePopulate, DynamiczoneInput} from "@malevich-studio/strapi-sdk-typescript";',
     'import {BlocksContent} from "@strapi/blocks-react-renderer";',
     '',
     'export default class Strapi extends StrapiBase {',
