@@ -39,7 +39,11 @@ interface ContentType {
     singularName: string,
     pluralName: string,
     description: string,
-    // pluginOptions: {},
+    pluginOptions?: {
+      i18n?: {
+        localized: false,
+      },
+    },
     kind: ContentTypeKind,
     collectionName: string,
     visible: boolean,
@@ -223,6 +227,16 @@ export async function generateStrapiTypes(strapi: Strapi) {
       updatedAt: {
         type: 'datetime',
       },
+      ...(contentType.schema.draftAndPublish ? {
+        publishedAt: {
+          type: 'datetime',
+        },
+      } : {}),
+      ...(contentType.schema.pluginOptions?.i18n?.localized ? {
+        locale: {
+          type: 'string',
+        },
+      } : {}),
       ...contentType.schema.attributes,
     }
     allInterfaces.push(generateResponseTypeCode(modelName, attributes));
@@ -231,7 +245,7 @@ export async function generateStrapiTypes(strapi: Strapi) {
   }
 
   const output = [
-    'import {Strapi as StrapiBase, Query, Filters, FilterValue, RelationInput, DynamiczonePopulate, DynamiczoneInput} from "@malevich-studio/strapi-sdk-typescript";',
+    'import {Strapi as StrapiBase, Query, Filters, FilterValue, RelationInput, DynamiczonePopulate, DynamiczoneComponent} from "@malevich-studio/strapi-sdk-typescript";',
     'import {BlocksContent} from "@strapi/blocks-react-renderer";',
     '',
     'export default class Strapi extends StrapiBase {',

@@ -47,6 +47,17 @@ export type File = {
   folderPath: string;
 }
 
+export type Locale = {
+  id: number,
+  documentId: string,
+  name: string,
+  code: string,
+  createdAt: string,
+  updatedAt: string,
+  publishedAt?: string,
+  isDefault: boolean,
+}
+
 export type Folder = {
   id?: number;
   documentId?: string;
@@ -134,7 +145,7 @@ export type Query<Fields, Sort, Filters, Populate> = {
   }),
 }
 
-export type DynamiczoneInput<ComponentName, ComponentInputType> = ComponentInputType & {
+export type DynamiczoneComponent<ComponentName, ComponentInputType> = ComponentInputType & {
   __component: ComponentName,
 };
 
@@ -163,6 +174,15 @@ export class Strapi {
           })
         } : {}
       ),
+    }, params));
+  }
+
+  async getLocales(params: RequestInit): Promise<Locale[]> {
+    return await this.baseFetch<Locale[]>('i18n/locales', _.merge({
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'GET',
     }, params));
   }
 

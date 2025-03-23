@@ -17,14 +17,14 @@ export default class Dynamiczone extends BaseRelation {
 
   public getType() {
     const types = this.attribute.components
-      .map(componentItem => getComponentName(componentItem))
+      .map(componentItem => `DynamiczoneComponent<'${componentItem}', ${getComponentName(componentItem)}>`)
       .join(' | ');
     return `(${types})[]`;
   }
 
   public getInputType(): string {
     const types = this.attribute.components
-      .map(componentItem => `DynamiczoneInput<'${componentItem}', ${getComponentName(componentItem)}Input>`)
+      .map(componentItem => `DynamiczoneComponent<'${componentItem}', ${getComponentName(componentItem)}Input>`)
       .join(' | ');
     return `(${types})[]`;
   }
