@@ -31,8 +31,8 @@ export type RelationAttribute = BaseAttribute & {
   relation: AttributeRelation;
   target: string,
   targetAttribute?: string,
-  inversedBy: string,
-  mappedBy: string,
+  inversedBy?: string,
+  mappedBy?: string,
 }
 
 export default class Relation extends BaseRelation {

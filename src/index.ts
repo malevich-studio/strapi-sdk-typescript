@@ -1,13 +1,13 @@
 import _ from 'lodash';
 import qs from 'qs';
-import mime from 'mime';
-import { readFile } from 'fs/promises';
-import { basename } from 'node:path';
 
 import type {RelationInput} from "@/generator/attributes/relation";
+import {logger} from "@/logger.ts";
 export type {RelationInput};
 
-type Response<T> = {
+const log = logger('request');
+
+export type SuccessResponse<T> = {
   data: T,
   meta: {
     pagination: {
@@ -20,8 +20,31 @@ type Response<T> = {
       start: number,
       limit: number,
     }),
-  }
+  },
+  error: undefined,
 }
+
+export type ErrorResponse = {
+  data: null,
+  "error": {
+    "status": string,
+    "name": 'ApplicationError' | 'ValidationError',
+    "message": string,
+    "details": {
+      [key: string]: any,
+    },
+  },
+}
+
+export type Response<T> = SuccessResponse<T> | ErrorResponse;
+
+export type UserResponse<T> = (T & {error: undefined}) | ErrorResponse;
+
+export type AuthResponse<T> = {
+  jwt: string,
+  user: T,
+  error: undefined,
+} | ErrorResponse;
 
 export type File = {
   id?: number;
@@ -158,23 +181,109 @@ export type DynamiczonePopulate<T> = {
 export class Strapi {
   constructor(
     private readonly url: string,
-    private readonly token: string,
+    private token?: string,
   ) {}
 
   public async fetch<T>(endpoint: string, data: object | FormData = {}, params: RequestInit = {}): Promise<Response<T>> {
-    const queryString = params.method === 'GET' ? qs.stringify(data) : '';
+    return await this.fetchData<Response<T>>(endpoint, params.method === 'GET' ? data : { data }, params);
+  }
 
-    return await this.baseFetch<Response<T>>(queryString ? `${endpoint}?${queryString}` : endpoint, _.merge({
+  private async fetchData<T>(endpoint: string, data: object | FormData = {}, params: RequestInit = {}): Promise<T> {
+    const queryString = params.method === 'GET' ? qs.stringify(data) : '';
+    return await this.baseFetch<T>(queryString ? `${endpoint}?${queryString}` : endpoint, _.merge({
       headers: {
         'Content-Type': 'application/json',
       },
       ...(params.method && !['GET', 'DELETE'].includes(params.method) ? {
-          body: JSON.stringify({
-            data,
-          })
+          body: JSON.stringify(data)
         } : {}
       ),
     }, params));
+  }
+
+  setToken(token: string) {
+    this.token = token;
+  }
+
+  getToken() {
+    return this.token;
+  }
+
+  protected async baseLogin<T>(identifier: string, password: string) {
+    const response = await this.fetchData<AuthResponse<T>>('auth/local', {
+      identifier,
+      password
+    }, {
+      method: 'POST',
+    });
+
+    if (!response.error) {
+      this.setToken(response.jwt);
+    }
+
+    return response;
+  }
+
+  protected async baseRegister<T, Q>(data: Q) {
+    const response = await this.fetchData<AuthResponse<T>>('auth/local/register', data as object, {
+      method: 'POST',
+    });
+
+    if (!response.error) {
+      this.setToken(response.jwt);
+    }
+
+    return response;
+  }
+
+  public async forgotPassword(email: string) {
+    return await this.fetchData<{ok: boolean, error: undefined} | ErrorResponse>('auth/forgot-password', {email}, {
+      method: 'POST',
+    });
+  }
+
+  public async sendEmailConfirmation(email: string) {
+    return await this.fetchData<{email: string, sent: boolean, error: undefined} | ErrorResponse>('/auth/send-email-confirmation', {email}, {
+      method: 'POST',
+    });
+  }
+
+  protected async baseResetPassword<T>(password: string, code: string) {
+    const response = await this.fetchData<AuthResponse<T>>('auth/reset-password', {
+      password,
+      passwordConfirmation: password,
+      code,
+    }, {
+      method: 'POST',
+    });
+
+    if (!response.error) {
+      this.setToken(response.jwt);
+    }
+
+    return response;
+  }
+
+  protected async baseChangePassword<T>(password: string, currentPassword: string) {
+    const response = await this.fetchData<AuthResponse<T>>('auth/change-password', {
+      password,
+      passwordConfirmation: password,
+      currentPassword,
+    }, {
+      method: 'POST',
+    });
+
+    if (!response.error) {
+      this.setToken(response.jwt);
+    }
+
+    return response;
+  }
+
+  protected async baseMe<T, Q>(data: Q) {
+    return await this.fetchData<UserResponse<T>>('users/me', data as object, {
+      method: 'GET',
+    });
   }
 
   async getLocales(params: RequestInit): Promise<Locale[]> {
@@ -221,21 +330,6 @@ export class Strapi {
     });
   }
 
-  /**
-   * For Node.js
-   *
-   * @param files list of files names which will be uploaded, example: ['/app/data/cover.js']
-   */
-  async upload(files: { path: string, filename?: string }[]) {
-    const form = new FormData();
-    await Promise.all(files.map(async (item) => {
-      const fileBuffer = await readFile(item.path);
-      const file = new File([fileBuffer], item.filename || basename(item.path), {type: mime.getType(item.path) || 'image/jpeg'});
-      form.append( 'files', file);
-    }));
-    return await this.uploadForm(form);
-  }
-
   async uploadForm(form: FormData) {
     return (await this.baseFetch<File[]>('upload', {
       method: 'POST',
@@ -244,28 +338,21 @@ export class Strapi {
   }
 
   private async baseFetch<T>(endpoint: string, params: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${this.url}/api/${endpoint}`, _.merge({
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-      },
-    }, params));
+    const mergedParams = _.merge({
+      ...(this.token ? {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+        }
+      } : {}),
+    }, params);
 
-    if (!response.ok) {
-      console.log(`${this.url}/api/${endpoint}`);
-      console.log(response);
-      const data: {
-        data: any,
-        error?: {
-          details?: {
-            errors?: any[],
-          },
-        },
-      } = await response.json();
-      console.log(data);
-      console.log(data?.error?.details?.errors);
-      throw new Error(`Помилка запиту до Strapi: ${response.status} ${response.statusText}`);
-    }
+    const response = await fetch(`${this.url}/api/${endpoint}`, mergedParams);
+    const data = await response.json();
 
-    return (await response.json());
+    log(mergedParams);
+    log(response);
+    log(data);
+
+    return data;
   }
 }

@@ -5,7 +5,7 @@ import type {StringAttribute} from "@/generator/attributes/string";
 import type {NumberAttribute} from "@/generator/attributes/number";
 import type {BooleanAttribute} from "@/generator/attributes/boolean";
 import type {MediaAttribute} from "@/generator/attributes/media";
-import type {RelationAttribute} from "@/generator/attributes/relation";
+import {AttributeRelation, type RelationAttribute} from "@/generator/attributes/relation";
 import type {EnumerationAttribute} from "@/generator/attributes/enumeration";
 import type {BlocksAttribute} from "@/generator/attributes/blocks";
 import type {JsonAttribute} from "@/generator/attributes/json";
@@ -15,13 +15,14 @@ import getAttributeGenerator from "@/generator/attributes";
 import {getContentTypeName} from "@/generator/utils/get-content-type-name";
 import type {DateTimeAttribute} from "@/generator/attributes/date-time";
 import type {FieldType} from "@/generator/attributes/base";
+import type {TimeAttribute} from "@/generator/attributes/time.ts";
 
 enum ContentTypeKind {
   CollectionType = 'collectionType',
   SingleType = 'singleType',
 }
 
-type Attribute = StringAttribute | NumberAttribute | BooleanAttribute | DateTimeAttribute | RelationAttribute | ComponentAttribute | EnumerationAttribute | MediaAttribute | JsonAttribute | BlocksAttribute;
+type Attribute = StringAttribute | NumberAttribute | BooleanAttribute | DateTimeAttribute | TimeAttribute | RelationAttribute | ComponentAttribute | EnumerationAttribute | MediaAttribute | JsonAttribute | BlocksAttribute;
 type Attributes = {
   [attributeName: string]: Attribute;
 }
@@ -39,7 +40,7 @@ interface ContentType {
     singularName: string,
     pluralName: string,
     description: string,
-    pluginOptions?: {
+    pluginOptions: {
       i18n?: {
         localized: false,
       },
@@ -188,8 +189,8 @@ function generateMethodsCode(contentType: ContentType) {
  * Main function to fetch Strapi (v5) data and generate the d.ts file
  */
 export async function generateStrapiTypes(strapi: Strapi) {
-  const contentTypes = (await strapi.fetch<ContentType[]>('content-type-builder/content-types')).data;
-  const components = (await strapi.fetch<Component[]>('content-type-builder/components')).data;
+  const contentTypes = (await strapi.fetch<ContentType[]>('content-type-builder/content-types')).data || [];
+  const components = (await strapi.fetch<Component[]>('content-type-builder/components')).data || [];
 
   const allInterfaces: string[] = [];
   const methods: string[] = [];
@@ -236,6 +237,12 @@ export async function generateStrapiTypes(strapi: Strapi) {
         locale: {
           type: 'string',
         },
+        localizations: {
+          type: 'relation',
+          target: contentType.uid,
+          relation: AttributeRelation.OneToMany,
+          required: true,
+        },
       } : {}),
       ...contentType.schema.attributes,
     }
@@ -249,6 +256,26 @@ export async function generateStrapiTypes(strapi: Strapi) {
     'import {BlocksContent} from "@strapi/blocks-react-renderer";',
     '',
     'export default class Strapi extends StrapiBase {',
+    `  public async login(identifier: string, password: string) {`,
+    `    return await this.baseLogin<User>(identifier, password);`,
+    '  }',
+    '  ',
+    `  public async register(data: UserInput) {`,
+    `    return await this.baseRegister<User, UserInput>(data);`,
+    '  }',
+    '  ',
+    `  public async resetPassword(password: string, code: string) {`,
+    `    return await this.baseResetPassword<User>(password, code);`,
+    '  }',
+    '  ',
+    `  public async changePassword(password: string, currentPassword: string) {`,
+    `    return await this.baseChangePassword<User>(password, currentPassword);`,
+    '  }',
+    '  ',
+    `  public async me(data: UserQuery) {`,
+    `    return await this.baseMe<User, UserQuery>(data);`,
+    '  }',
+    '  ',
     methods.join('\n\n'),
     '}',
     '',

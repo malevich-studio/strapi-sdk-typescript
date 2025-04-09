@@ -12,6 +12,7 @@ import type {BaseAttribute} from "@/generator/attributes/base";
 import Boolean from "@/generator/attributes/boolean.ts";
 import Date from "@/generator/attributes/date.ts";
 import Dynamiczone from "@/generator/attributes/dynamiczone.ts";
+import Time from "@/generator/attributes/time.ts";
 
 const types: Record<string, typeof Base> = {
   'string': String,
@@ -28,6 +29,7 @@ const types: Record<string, typeof Base> = {
   'enumeration': Enumeration,
   'date': Date,
   'datetime': DateTime,
+  'time': Time,
   'component': Component,
   'dynamiczone': Dynamiczone,
   'blocks': Blocks,

@@ -1,6 +1,6 @@
 {
   "name": "@malevich-studio/strapi-sdk-typescript",
-  "version": "1.1.2",
+  "version": "1.2.16",
   "sideEffects": false,
   "bin": {
     "generate-strapi-types": "./dist/cli.mjs"
@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@strapi/blocks-react-renderer": "^1.0.2",
+    "debug": "^4.4.0",
     "dotenv": "^16.4.7",
     "husky": "^9.1.7",
     "lodash": "^4.17.21",
@@ -34,7 +35,7 @@
   "author": {
     "name": "Malevich Studio",
     "email": "info@malevichstudio.com",
-    "url": "https://malevichstudio.com/"
+    "url": "https://malevichstudio.com"
   },
   "contributors": [
     {
@@ -53,9 +54,18 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-typescript": "^12.1.2",
+    "@types/debug": "^4.1.12",
     "rollup": "^4.34.6",
     "rollup-plugin-dts": "^6.1.1",
     "typescript": "^5.7.3"
   },
-  "keywords": ["strapi", "strapi5", "api", "rest", "sdk", "typescript", "nextjs"]
+  "keywords": [
+    "strapi",
+    "strapi5",
+    "api",
+    "rest",
+    "sdk",
+    "typescript",
+    "nextjs"
+  ]
 }

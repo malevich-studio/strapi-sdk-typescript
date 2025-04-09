@@ -108,13 +108,41 @@ const articles = api.articles(
 );
 ```
 
+### Login Example
+
+Next.js
+
+```ts
+'use server';
+
+import Strapi from '@/strapi';
+import { cookies } from 'next/headers';
+
+export async function login(email: string, password: string) {
+  const strapi = new Strapi(process.env.STRAPI_URL || '');
+  const response = await strapi.login(email, password);
+
+  if (!response.error) {
+    (await cookies()).set('access_token', response.jwt, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 3600 * 24 * 365 * 10,
+    });
+  }
+
+  return response;
+}
+```
+
 ## 📌 TODO List
 
 - [ ] Add authentication features:
-    - [ ] Log In functionality
-    - [ ] User Registration
+    - [x] Log In functionality
+    - [x] User Registration
     - [ ] User privileges check
-- [ ] Add localization features
+- [x] Add localization features
 - [ ] Refactor `src/generator/index.ts` for better maintainability
 - [ ] Enable passing Strapi credentials via CLI parameters
 - [ ] Allow customization of API class path
