@@ -182,6 +182,15 @@ function generateMethodsCode(contentType: ContentType) {
     '  }',
   ].join('\n'));
 
+  console.log(contentType.uid)
+  if (contentType.uid.startsWith('api::')) {
+    methods.push([
+      `  public async can${getContentTypeName(contentType.schema.singularName)}(action: PermissionAction) {`,
+      `    return await this.can('${contentType.uid}', '${contentType.schema.singularName.replace(/^api::/, '')}', action);`,
+      '  }',
+    ].join('\n'));
+  }
+
   return methods;
 }
 
@@ -252,7 +261,7 @@ export async function generateStrapiTypes(strapi: Strapi) {
   }
 
   const output = [
-    'import {Strapi as StrapiBase, Query, Filters, FilterValue, RelationInput, DynamiczonePopulate, DynamiczoneComponent} from "@malevich-studio/strapi-sdk-typescript";',
+    'import {Strapi as StrapiBase, Query, Filters, FilterValue, RelationInput, DynamiczonePopulate, DynamiczoneComponent, PermissionAction} from "@malevich-studio/strapi-sdk-typescript";',
     'import {BlocksContent} from "@strapi/blocks-react-renderer";',
     '',
     'export default class Strapi extends StrapiBase {',

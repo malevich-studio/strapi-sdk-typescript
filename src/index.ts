@@ -7,6 +7,21 @@ export type {RelationInput};
 
 const log = logger('request');
 
+type Permissions = {
+  [key: string]: {
+    controllers: {
+      [key: string]: {
+        [key: string]: {
+          enabled: boolean,
+          policy: string,
+        },
+      },
+    },
+  },
+}
+
+export type PermissionAction = 'find' | 'findOne' | 'create' | 'update' | 'delete';
+
 export type SuccessResponse<T> = {
   data: T,
   meta: {
@@ -354,5 +369,28 @@ export class Strapi {
     log(data);
 
     return data;
+  }
+
+  private permissions?: Permissions;
+
+  public async can(uid: string, controller: string, action: string) {
+    if (!this.permissions) {
+      const response = await this.fetchData<{permissions: Permissions}>('users-permissions/permissions');
+      this.permissions = response.permissions;
+    }
+
+    if (!this.permissions[uid]) {
+      throw new Error(`Permissions for ${uid} not found!`);
+    }
+
+    if (!this.permissions[uid].controllers[controller]) {
+      throw new Error(`Permissions for ${uid}.${controller} not found!`);
+    }
+
+    if (!this.permissions[uid].controllers[controller][action]) {
+      throw new Error(`Permission for ${uid}.${controller}.${action} not found!`);
+    }
+
+    return this.permissions[uid].controllers[controller][action].enabled;
   }
 }
