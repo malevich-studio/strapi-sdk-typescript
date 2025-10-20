@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Strapi } from "@/index.ts";
+import {type Permissions, Strapi} from "@/index.ts";
 import type {StringAttribute} from "@/generator/attributes/string";
 import type {NumberAttribute} from "@/generator/attributes/number";
 import type {BooleanAttribute} from "@/generator/attributes/boolean";
@@ -147,7 +147,7 @@ function generateInputTypeCode(name: string, attributes: Attributes): string {
   return lines.join('\n');
 }
 
-function generateMethodsCode(contentType: ContentType) {
+function generateMethodsCode(contentType: ContentType, permissions: Permissions): string[] {
   const methods: string[] = []
   const modelName = getContentTypeName(contentType.uid);
 
@@ -172,7 +172,7 @@ function generateMethodsCode(contentType: ContentType) {
 
   methods.push([
     `  public async update${getContentTypeName(contentType.schema.singularName)}(id: string, data: ${modelName}Input, params?: RequestInit) {`,
-    `    return await this.update<${modelName}, ${modelName}Input>('${contentType.schema.pluralName}', id, data, params);`,
+    `    return await this.update${modelName === 'User' ? 'BaseUser' : ''}<${modelName}, ${modelName}Input>('${contentType.schema.pluralName}', id, data, params);`,
     '  }',
   ].join('\n'));
 
@@ -182,11 +182,11 @@ function generateMethodsCode(contentType: ContentType) {
     '  }',
   ].join('\n'));
 
-  console.log(contentType.uid)
   if (contentType.uid.startsWith('api::')) {
+    const actions = Object.keys(permissions[contentType.uid.split('.')[0]].controllers[contentType.schema.singularName]);
     methods.push([
-      `  public async can${getContentTypeName(contentType.schema.singularName)}(action: PermissionAction) {`,
-      `    return await this.can('${contentType.uid}', '${contentType.schema.singularName.replace(/^api::/, '')}', action);`,
+      `  public async can${getContentTypeName(contentType.schema.singularName)}(action: '${actions.join('\' | \'')}') {`,
+      `    return await this.can('${contentType.uid.split('.')[0]}', '${contentType.schema.singularName}', action);`,
       '  }',
     ].join('\n'));
   }
@@ -200,6 +200,7 @@ function generateMethodsCode(contentType: ContentType) {
 export async function generateStrapiTypes(strapi: Strapi) {
   const contentTypes = (await strapi.fetch<ContentType[]>('content-type-builder/content-types')).data || [];
   const components = (await strapi.fetch<Component[]>('content-type-builder/components')).data || [];
+  const permissions = (await strapi.fetchData<{permissions: Permissions}>('users-permissions/permissions')).permissions || {};
 
   const allInterfaces: string[] = [];
   const methods: string[] = [];
@@ -222,7 +223,7 @@ export async function generateStrapiTypes(strapi: Strapi) {
       continue;
     }
 
-    methods.push(...generateMethodsCode(contentType));
+    methods.push(...generateMethodsCode(contentType, permissions));
     const modelName = getContentTypeName(contentType.uid);
     const attributes: Attributes = {
       id: {

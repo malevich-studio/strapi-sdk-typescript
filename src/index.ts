@@ -7,7 +7,7 @@ export type {RelationInput};
 
 const log = logger('request');
 
-type Permissions = {
+export type Permissions = {
   [key: string]: {
     controllers: {
       [key: string]: {
@@ -203,7 +203,7 @@ export class Strapi {
     return await this.fetchData<Response<T>>(endpoint, params.method === 'GET' ? data : { data }, params);
   }
 
-  private async fetchData<T>(endpoint: string, data: object | FormData = {}, params: RequestInit = {}): Promise<T> {
+  public async fetchData<T>(endpoint: string, data: object | FormData = {}, params: RequestInit = {}): Promise<T> {
     const queryString = params.method === 'GET' ? qs.stringify(data) : '';
     return await this.baseFetch<T>(queryString ? `${endpoint}?${queryString}` : endpoint, _.merge({
       headers: {
@@ -338,6 +338,13 @@ export class Strapi {
     });
   }
 
+  protected async updateBaseUser<T, Q extends object>(endpoint: string, id: string, data: Q, params: RequestInit = {}): Promise<T> {
+    return await this.fetchData<T>(`${endpoint}/${id}`, data, {
+      method: 'PUT',
+      ...params,
+    });
+  }
+
   async delete<T>(endpoint: string, id: string, params: RequestInit = {}): Promise<Response<T>> {
     return await this.fetch<T>(`${endpoint}/${id}`, {}, {
       method: 'DELETE',
@@ -362,7 +369,15 @@ export class Strapi {
     }, params);
 
     const response = await fetch(`${this.url}/api/${endpoint}`, mergedParams);
-    const data = await response.json();
+
+    let data = null;
+
+    try {
+      data = await response?.clone().json() || null;
+    } catch (error) {
+      console.error(await response.text());
+      throw error;
+    }
 
     log(mergedParams);
     log(response);
@@ -371,26 +386,36 @@ export class Strapi {
     return data;
   }
 
-  private permissions?: Permissions;
+  private permissionsList?: Permissions;
 
   public async can(uid: string, controller: string, action: string) {
-    if (!this.permissions) {
-      const response = await this.fetchData<{permissions: Permissions}>('users-permissions/permissions');
-      this.permissions = response.permissions;
+    if (!this.permissionsList) {
+      const user = await this.baseMe<{
+        role: {
+          id: number,
+        },
+      }, {}>({populate: { role: {fields: ["id"]}}});
+
+      if (user.error) {
+        return false;
+      }
+
+      const response = await this.fetchData<{role: {permissions: Permissions}}>(`users-permissions/roles/${user.role.id}`);
+      this.permissionsList = response.role.permissions;
     }
 
-    if (!this.permissions[uid]) {
+    if (!this.permissionsList[uid]) {
       throw new Error(`Permissions for ${uid} not found!`);
     }
 
-    if (!this.permissions[uid].controllers[controller]) {
+    if (!this.permissionsList[uid].controllers[controller]) {
       throw new Error(`Permissions for ${uid}.${controller} not found!`);
     }
 
-    if (!this.permissions[uid].controllers[controller][action]) {
+    if (!this.permissionsList[uid].controllers[controller][action]) {
       throw new Error(`Permission for ${uid}.${controller}.${action} not found!`);
     }
 
-    return this.permissions[uid].controllers[controller][action].enabled;
+    return this.permissionsList[uid].controllers[controller][action].enabled;
   }
 }
