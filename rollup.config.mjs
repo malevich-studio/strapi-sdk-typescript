@@ -1,4 +1,5 @@
 import typescript from "@rollup/plugin-typescript";
+import alias from "@rollup/plugin-alias";
 import dts from "rollup-plugin-dts";
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import json from "@rollup/plugin-json";
@@ -13,6 +14,11 @@ export default [
     ],
     external: ["fs", "path"],
     plugins: [
+      alias({
+        entries: [
+          { find: "@", replacement: new URL("./src", import.meta.url).pathname }
+        ]
+      }),
       nodeResolve(),
       commonjs({
         dynamicRequireTargets: [
@@ -32,6 +38,11 @@ export default [
     ],
     external: ["fs", "path"],
     plugins: [
+      alias({
+        entries: [
+          { find: "@", replacement: new URL("./src", import.meta.url).pathname }
+        ]
+      }),
       nodeResolve(),
       commonjs({
         dynamicRequireTargets: [

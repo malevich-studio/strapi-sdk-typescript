@@ -388,6 +388,40 @@ export class Strapi {
 
   private permissionsList?: Permissions;
 
+  private mergePermissionsPreferEnabled(parentPermissions: Permissions, childPermissions: Permissions): Permissions {
+    // Merge permissions so that any action enabled in either source remains enabled in the result
+    const customizer = (objValue: any, srcValue: any, key: string) => {
+      if (key === 'enabled') {
+        const a = typeof objValue === 'boolean' ? objValue : false;
+        const b = typeof srcValue === 'boolean' ? srcValue : false;
+        return a || b;
+      }
+      return undefined; // fall back to default merge behavior
+    };
+    return _.mergeWith({}, parentPermissions, childPermissions, customizer);
+  }
+
+  private async fetchRolePermissions(roleId: number): Promise<{ permissions: Permissions, parentId?: number }> {
+    const response = await this.fetchData<{ role: { permissions: Permissions, parent?: { id?: number } | number } }>(`users-permissions/roles/${roleId}`);
+    const parentId = typeof response.role.parent === 'number' ? response.role.parent : response.role.parent?.id;
+    return { permissions: response.role.permissions, parentId };
+  }
+
+  private async collectRolePermissions(roleId: number): Promise<Permissions> {
+    // Start with the immediate role's permissions, then walk up parents, merging so child overrides parent
+    const { permissions: initialPermissions, parentId: initialParentId } = await this.fetchRolePermissions(roleId);
+    let accumulatedPermissions: Permissions = _.cloneDeep(initialPermissions);
+    let currentParentId: number | undefined = initialParentId;
+
+    while (currentParentId) {
+      const { permissions: parentPermissions, parentId } = await this.fetchRolePermissions(currentParentId);
+      accumulatedPermissions = this.mergePermissionsPreferEnabled(parentPermissions, accumulatedPermissions);
+      currentParentId = parentId;
+    }
+
+    return accumulatedPermissions;
+  }
+
   public async can(uid: string, controller: string, action: string) {
     if (!this.permissionsList) {
       const user = await this.baseMe<{
@@ -400,8 +434,7 @@ export class Strapi {
         return false;
       }
 
-      const response = await this.fetchData<{role: {permissions: Permissions}}>(`users-permissions/roles/${user.role.id}`);
-      this.permissionsList = response.role.permissions;
+      this.permissionsList = await this.collectRolePermissions(user.role.id);
     }
 
     if (!this.permissionsList[uid]) {
