@@ -373,7 +373,9 @@ export class Strapi {
     let data = null;
 
     try {
-      data = await response?.clone().json() || null;
+      if (response.status !== 204) {
+        data = await response?.clone().json() || null;
+      }
     } catch (error) {
       console.error(await response.text());
       throw error;
