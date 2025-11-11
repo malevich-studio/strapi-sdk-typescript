@@ -49,6 +49,9 @@
     "url": "https://github.com/malevich-studio/strapi-sdk-typescript"
   },
   "license": "ISC",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "A TypeScript SDK for interacting with Strapi APIs.",
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
