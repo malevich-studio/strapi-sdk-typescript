@@ -16,13 +16,14 @@ import {getContentTypeName} from "@/generator/utils/get-content-type-name";
 import type {DateTimeAttribute} from "@/generator/attributes/date-time";
 import type {FieldType} from "@/generator/attributes/base";
 import type {TimeAttribute} from "@/generator/attributes/time.ts";
+import type {RichtextAttribute} from "@/generator/attributes/richtext.ts";
 
 enum ContentTypeKind {
   CollectionType = 'collectionType',
   SingleType = 'singleType',
 }
 
-type Attribute = StringAttribute | NumberAttribute | BooleanAttribute | DateTimeAttribute | TimeAttribute | RelationAttribute | ComponentAttribute | EnumerationAttribute | MediaAttribute | JsonAttribute | BlocksAttribute;
+type Attribute = StringAttribute | NumberAttribute | BooleanAttribute | DateTimeAttribute | TimeAttribute | RelationAttribute | ComponentAttribute | EnumerationAttribute | MediaAttribute | JsonAttribute | BlocksAttribute | RichtextAttribute;
 type Attributes = {
   [attributeName: string]: Attribute;
 }
