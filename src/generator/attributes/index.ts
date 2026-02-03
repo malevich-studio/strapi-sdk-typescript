@@ -13,6 +13,7 @@ import Boolean from "@/generator/attributes/boolean.ts";
 import Date from "@/generator/attributes/date.ts";
 import Dynamiczone from "@/generator/attributes/dynamiczone.ts";
 import Time from "@/generator/attributes/time.ts";
+import Richtext from "@/generator/attributes/richtext.ts";
 
 const types: Record<string, typeof Base> = {
   'string': String,
@@ -34,6 +35,7 @@ const types: Record<string, typeof Base> = {
   'dynamiczone': Dynamiczone,
   'blocks': Blocks,
   'json': Json,
+  'richtext': Richtext,
 };
 
 export default function getAttributeGenerator(name: string, attribute: BaseAttribute & {type: string}): Base {
