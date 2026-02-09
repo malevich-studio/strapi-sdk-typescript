@@ -14,12 +14,14 @@ import Date from "@/generator/attributes/date.ts";
 import Dynamiczone from "@/generator/attributes/dynamiczone.ts";
 import Time from "@/generator/attributes/time.ts";
 import Richtext from "@/generator/attributes/richtext.ts";
+import Uid from "@/generator/attributes/uid.ts";
 
 const types: Record<string, typeof Base> = {
   'string': String,
   'text': String,
   'password': String,
   'email': String,
+  'uid': Uid,
   'integer': Number,
   'biginteger': Number,
   'decimal': Number,
